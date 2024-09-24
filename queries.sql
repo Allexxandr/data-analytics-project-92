@@ -161,16 +161,16 @@ ORDER BY
         EXTRACT(YEAR FROM s.sale_date),
         '-',
         TO_CHAR(EXTRACT(MONTH FROM s.sale_date), 'FM00')
-    )
+    );
 
 /*buyers whose first purchase occurred during special promotions*/
 
 WITH promotional_products AS (
-    SELECT 
-        product_id 
-    FROM products 
+    SELECT product_id
+    FROM products
     WHERE price = 0
 ),
+
 first_sales AS (
     SELECT
         s.customer_id,
@@ -180,17 +180,21 @@ first_sales AS (
     FULL JOIN promotional_products AS pp ON s.product_id = pp.product_id
     GROUP BY s.customer_id
 ),
+
 duplicates_removed AS (
     SELECT DISTINCT
-        c.first_name || ' ' || c.last_name AS customer,
         fs.first_sale_date AS sale_date,
+        c.first_name || ' ' || c.last_name AS customer,
         e.first_name || ' ' || e.last_name AS seller
     FROM sales AS s
     FULL JOIN customers AS c ON s.customer_id = c.customer_id
     FULL JOIN employees AS e ON s.sales_person_id = e.employee_id
-    FULL JOIN first_sales AS fs ON s.customer_id = fs.customer_id AND s.sale_date = fs.first_sale_date
+    FULL JOIN
+        first_sales AS fs
+        ON s.customer_id = fs.customer_id AND s.sale_date = fs.first_sale_date
     WHERE s.product_id IN (SELECT product_id FROM promotional_products)
 )
+
 SELECT *
 FROM duplicates_removed
 ORDER BY customer;
